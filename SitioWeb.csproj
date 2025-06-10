@@ -268,9 +268,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="templates\css\" />
-    <Folder Include="templates\img\" />
-    <Folder Include="templates\js\" />
+    <Folder Include="templates\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
