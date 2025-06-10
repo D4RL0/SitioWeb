@@ -34,76 +34,125 @@ namespace SitioWeb
 
         protected void btnGuardar_Click(object sender, EventArgs e)
         {
+            lblMensaje.ForeColor = System.Drawing.Color.Red;
+
+            if (string.IsNullOrWhiteSpace(txtNombre.Text))
+            {
+                lblMensaje.Text = "El nombre es obligatorio.";
+                return;
+            }
+
             try
             {
                 using (SqlConnection con = new SqlConnection(cadena))
                 using (SqlCommand cmd = new SqlCommand("sp_Tecnologia_Crear", con))
                 {
                     cmd.CommandType = CommandType.StoredProcedure;
-                    cmd.Parameters.AddWithValue("@Nombre", txtNombre.Text);
-                    cmd.Parameters.AddWithValue("@Descripcion", txtDescripcion.Text);
+                    cmd.Parameters.AddWithValue("@Nombre", txtNombre.Text.Trim());
+                    cmd.Parameters.AddWithValue("@Descripcion", string.IsNullOrWhiteSpace(txtDescripcion.Text) ? (object)DBNull.Value : txtDescripcion.Text.Trim());
                     con.Open();
                     cmd.ExecuteNonQuery();
                 }
+                lblMensaje.ForeColor = System.Drawing.Color.Green;
                 lblMensaje.Text = "Tecnología guardada correctamente.";
                 Limpiar();
                 CargarTecnologias();
             }
             catch (Exception ex)
             {
-                lblMensaje.Text = "Error: " + ex.Message;
+                lblMensaje.Text = "Error al guardar: " + ex.Message;
             }
         }
 
-        protected void gvTecnologias_RowEditing(object sender, System.Web.UI.WebControls.GridViewEditEventArgs e)
+        protected void gvTecnologias_RowEditing(object sender, GridViewEditEventArgs e)
         {
             gvTecnologias.EditIndex = e.NewEditIndex;
             CargarTecnologias();
         }
 
-        protected void gvTecnologias_RowCancelingEdit(object sender, System.Web.UI.WebControls.GridViewCancelEditEventArgs e)
+        protected void gvTecnologias_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
         {
             gvTecnologias.EditIndex = -1;
             CargarTecnologias();
+            lblMensaje.Text = "";
         }
 
-        protected void gvTecnologias_RowUpdating(object sender, System.Web.UI.WebControls.GridViewUpdateEventArgs e)
+        protected void gvTecnologias_RowUpdating(object sender, GridViewUpdateEventArgs e)
         {
-            int id = Convert.ToInt32(gvTecnologias.DataKeys[e.RowIndex].Value);
-            string nombre = ((TextBox)gvTecnologias.Rows[e.RowIndex].Cells[1].Controls[0]).Text;
-            string descripcion = ((TextBox)gvTecnologias.Rows[e.RowIndex].Cells[2].Controls[0]).Text;
+            lblMensaje.ForeColor = System.Drawing.Color.Red;
 
-            using (SqlConnection con = new SqlConnection(cadena))
-            using (SqlCommand cmd = new SqlCommand("sp_Tecnologia_Actualizar", con))
+            int id = Convert.ToInt32(gvTecnologias.DataKeys[e.RowIndex].Value);
+
+            TextBox txtNombreEdit = (TextBox)gvTecnologias.Rows[e.RowIndex].FindControl("txtNombreEdit");
+            TextBox txtDescripcionEdit = (TextBox)gvTecnologias.Rows[e.RowIndex].FindControl("txtDescripcionEdit");
+
+            if (txtNombreEdit == null || txtDescripcionEdit == null)
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@TecnologiaID", id);
-                cmd.Parameters.AddWithValue("@Nombre", nombre);
-                cmd.Parameters.AddWithValue("@Descripcion", descripcion);
-                con.Open();
-                cmd.ExecuteNonQuery();
+                lblMensaje.Text = "Error al obtener los controles de edición.";
+                return;
             }
-            gvTecnologias.EditIndex = -1;
-            CargarTecnologias();
+
+            string nombre = txtNombreEdit.Text.Trim();
+            string descripcion = txtDescripcionEdit.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                lblMensaje.Text = "El nombre es obligatorio.";
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection con = new SqlConnection(cadena))
+                using (SqlCommand cmd = new SqlCommand("sp_Tecnologia_Actualizar", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@TecnologiaID", id);
+                    cmd.Parameters.AddWithValue("@Nombre", nombre);
+                    cmd.Parameters.AddWithValue("@Descripcion", string.IsNullOrWhiteSpace(descripcion) ? (object)DBNull.Value : descripcion);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                lblMensaje.ForeColor = System.Drawing.Color.Green;
+                lblMensaje.Text = "Tecnología actualizada correctamente.";
+                gvTecnologias.EditIndex = -1;
+                CargarTecnologias();
+            }
+            catch (Exception ex)
+            {
+                lblMensaje.Text = "Error al actualizar: " + ex.Message;
+            }
         }
 
-        protected void gvTecnologias_RowDeleting(object sender, System.Web.UI.WebControls.GridViewDeleteEventArgs e)
+        protected void gvTecnologias_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
+            lblMensaje.ForeColor = System.Drawing.Color.Red;
+
             int id = Convert.ToInt32(gvTecnologias.DataKeys[e.RowIndex].Value);
-            using (SqlConnection con = new SqlConnection(cadena))
-            using (SqlCommand cmd = new SqlCommand("sp_Tecnologia_Eliminar", con))
+            try
             {
-                cmd.CommandType = CommandType.StoredProcedure;
-                cmd.Parameters.AddWithValue("@TecnologiaID", id);
-                con.Open();
-                cmd.ExecuteNonQuery();
+                using (SqlConnection con = new SqlConnection(cadena))
+                using (SqlCommand cmd = new SqlCommand("sp_Tecnologia_Eliminar", con))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@TecnologiaID", id);
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                lblMensaje.ForeColor = System.Drawing.Color.Green;
+                lblMensaje.Text = "Tecnología eliminada correctamente.";
+                CargarTecnologias();
             }
-            CargarTecnologias();
+            catch (Exception ex)
+            {
+                lblMensaje.Text = "Error al eliminar: " + ex.Message;
+            }
         }
 
         protected void btnCancelar_Click(object sender, EventArgs e)
         {
             Limpiar();
+            lblMensaje.Text = "";
         }
 
         void Limpiar()
